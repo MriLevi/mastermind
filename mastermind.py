@@ -98,7 +98,7 @@ class HumanCodeBreaker(CodeBreaker):
 
 
 class ComputerCodeBreaker(CodeBreaker):
-    def __init__(self, game_utils):
+    def __init__(self, game_utils, algorithm):
         self._game_utils = game_utils
         # valid_guess matrix (n_positions, n_colors) describes
         # all possible guesses by enumerating (position, color) pairs
@@ -116,18 +116,19 @@ class ComputerCodeBreaker(CodeBreaker):
         colors_to_check = [color in self._right_colors or color in self._unseen_colors for color in
                            range(self._game_utils.n_colors)]
         # make a greedy guess based on the information provided by code maker so far
-        return self._make_guess(current_guess, colors_to_check)
+        return self._make_guess(current_guess, colors_to_check, _args.algorithm)
 
-    def _make_guess(self, current_guess, colors_to_check, current_position=0):
+    def _make_guess(self, current_guess, colors_to_check, algorithm, current_position=0):
         # performs depth first search for a valid guess using information in the guess matrix
         # for selecting a color in any given position
         if current_position == self._game_utils.n_positions:
             # guess has been made so return it
             return current_guess
-        else:
+        elif algorithm == 1:
             # prepare all viable colors at this position given information so far
             valid_colors = [color for color in range(self._game_utils.n_colors)
                             if colors_to_check[color] and self._valid_guess[current_position][color]]
+            print(f'De valid colors op positie {current_position} zijn {valid_colors}')
             # shuffle colors to add some randomness to the selection
             # then prioritize colors according to following rules (highest priority is smallest):
             #   0   color has not been tried so far
@@ -140,18 +141,22 @@ class ComputerCodeBreaker(CodeBreaker):
             if self._game_utils.duplicates_allowed:
                 for color in valid_colors:
                     current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, current_position + 1) is not None:
+                    if self._make_guess(current_guess, colors_to_check, algorithm, current_position + 1) is not None:
                         return current_guess
             else:
                 for color in valid_colors:
                     colors_to_check[color] = False
                     current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, current_position + 1) is not None:
+                    if self._make_guess(current_guess, colors_to_check, algorithm, current_position + 1) is not None:
                         return current_guess
                     else:
                         colors_to_check[color] = True
             # no color was valid in this position so go back to previous position and continue search from there
             return None
+        elif algorithm == 2:
+            print('do nothing')
+        elif algorithm == 3:
+            print('do nothing')
 
     def receive_feedback(self, guess, feedback):
         # updates guess matrix according to the information from code maker
@@ -300,6 +305,7 @@ if __name__ == "__main__":
     _parser = argparse.ArgumentParser(description="play mastermind board game")
     _parser.add_argument("-colors", type=int, default=6, help="number of colors")
     _parser.add_argument("-positions", type=int, default=4, help="number of positions in code")
+    _parser.add_argument("-algorithm", type= int, default=1, help="algorithm to use, 1 2 3")
     _parser.add_argument("--maker", action="store_true", default=False, help="play as code maker")
     _parser.add_argument("--breaker", action="store_true", default=False, help="play as code breaker")
     _parser.add_argument("--no_duplicates", action="store_true", default=False, help="disallow duplicate colors")
@@ -340,6 +346,6 @@ if __name__ == "__main__":
         _code_breaker = HumanCodeBreaker(_game_utils)
     else:
         print("Code breaker is played by computer.")
-        _code_breaker = ComputerCodeBreaker(_game_utils)
+        _code_breaker = ComputerCodeBreaker(_game_utils, _args.algorithm)
 
     play_mastermind(_code_maker, _code_breaker)
