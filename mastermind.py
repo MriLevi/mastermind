@@ -128,7 +128,6 @@ class ComputerCodeBreaker(CodeBreaker):
             # prepare all viable colors at this position given information so far
             valid_colors = [color for color in range(self._game_utils.n_colors)
                             if colors_to_check[color] and self._valid_guess[current_position][color]]
-            print(f'De valid colors op positie {current_position} zijn {valid_colors}')
             # shuffle colors to add some randomness to the selection
             # then prioritize colors according to following rules (highest priority is smallest):
             #   0   color has not been tried so far
