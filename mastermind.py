@@ -110,32 +110,30 @@ class ComputerCodeBreaker(CodeBreaker):
         # flag whether all right colors have been found
         self._right_colors_found = False
 
-    def make_guess(self):
+    def make_guess(self, tries):
         current_guess = [None] * self._game_utils.n_positions
         # remove colors that are wrong
         colors_to_check = [color in self._right_colors or color in self._unseen_colors for color in
                            range(self._game_utils.n_colors)]
-        # make a greedy guess based on the information provided by code maker so far
+
+        if tries == 1:                #this counts the number of tries
+            current_guess = [1,1,2,3] #if this is the first guess, supply [1,1,2,3] as current_guess
         return self._make_guess(current_guess, colors_to_check, _args.algorithm)
+
 
     def _make_guess(self, current_guess, colors_to_check, algorithm, current_position=0):
         # performs depth first search for a valid guess using information in the guess matrix
         # for selecting a color in any given position
+
         if current_position == self._game_utils.n_positions:
             # guess has been made so return it
             return current_guess
-        elif algorithm == 1:
+        elif algorithm == 1:  ##simple strategy
             # prepare all viable colors at this position given information so far
             valid_colors = [color for color in range(self._game_utils.n_colors)
                             if colors_to_check[color] and self._valid_guess[current_position][color]]
             # shuffle colors to add some randomness to the selection
-            # then prioritize colors according to following rules (highest priority is smallest):
-            #   0   color has not been tried so far
-            #   1   color is right
-            #   2   color has not been tried but will be in current guess
             random.shuffle(valid_colors)
-            valid_colors.sort(
-                key=lambda color: 2 * int(color + 1 in current_guess) if color in self._unseen_colors else 1)
             # try each valid color in current position until a valid guess has been found
             if self._game_utils.duplicates_allowed:
                 for color in valid_colors:
@@ -153,7 +151,31 @@ class ComputerCodeBreaker(CodeBreaker):
             # no color was valid in this position so go back to previous position and continue search from there
             return None
         elif algorithm == 2:
-            print('do nothing')
+            if current_guess == [1,1,2,3]: ## 1st guess is always 1,1,2,3, which is supplied from make_guess if it's the first try.
+                return current_guess
+            # prepare all viable colors at this position given information so far
+            valid_colors = [color for color in range(self._game_utils.n_colors)
+                            if colors_to_check[color] and self._valid_guess[current_position][color]]
+            # shuffle colors to add some randomness to the selection
+            random.shuffle(valid_colors)
+            # try each valid color in current position until a valid guess has been found
+            if self._game_utils.duplicates_allowed:
+                for color in valid_colors:
+                    current_guess[current_position] = color + 1
+                    if self._make_guess(current_guess, colors_to_check, algorithm,
+                                        current_position + 1) is not None:
+                        return current_guess
+            else:
+                for color in valid_colors:
+                    colors_to_check[color] = False
+                    current_guess[current_position] = color + 1
+                    if self._make_guess(current_guess, colors_to_check, algorithm,
+                                        current_position + 1) is not None:
+                        return current_guess
+                    else:
+                        colors_to_check[color] = True
+            # no color was valid in this position so go back to previous position and continue search from there
+            return None
         elif algorithm == 3:
             print('do nothing')
 
@@ -266,19 +288,23 @@ def _auto_feedback(code, guess):
 
 def play_mastermind(code_maker, code_breaker):
     code_maker.make_code()
+    tries=0
     while True:
-        guess = code_breaker.make_guess()
+        tries+=1 #keep track of the amount of tries
+        guess = code_breaker.make_guess(tries)
         if guess is not None:
             feedback = code_maker.give_feedback(guess)
             guess_as_string = "".join([str(color) for color in guess])
             print(guess_as_string, feedback)
             if _is_guess_correct(feedback):
-                break
+                with open('results.txt', "a") as f: #append the results to a txt file, used for me to check big samples quickly, probably not in final product
+                    f.write(f'{tries}\n')
+                    f.close()
+                return print(f'Correct! in {tries}')
             else:
                 code_breaker.receive_feedback(guess, feedback)
         else:
-            print("Guess could not be made. Make sure your input is valid.")
-            break
+            return print("Guess could not be made. Make sure your input is valid.")
 
 
 if __name__ == "__main__":
@@ -345,6 +371,7 @@ if __name__ == "__main__":
         _code_breaker = HumanCodeBreaker(_game_utils)
     else:
         print("Code breaker is played by computer.")
+        print(f"Code breaker is using algorithm {_args.algorithm}")
         _code_breaker = ComputerCodeBreaker(_game_utils, _args.algorithm)
 
     play_mastermind(_code_maker, _code_breaker)
