@@ -8,11 +8,9 @@ Code maker invents a secret code and provides feedback to the code breaker. Code
         
 By default, code is a combination of 4 colors numbered from 1 to 6. Colors may repeat.
         
-Feedback is a sequence of markers for each position. There are three valid markers:
-* `b`   right color in the right position
-* `w`   right color in a wrong position
-* `.`  wrong color
-
+Feedback is given in the form of x,y
+x represents the amount of colors that are correct, and in the correct position
+y represents the amount of colors that are correct, but in the wrong position
 # Usage
 ```
     usage: mastermind.py [-h] [-colors COLORS] [-positions POSITIONS] [--maker]
@@ -37,9 +35,11 @@ Feedback is a sequence of markers for each position. There are three valid marke
 ```
 Code maker is played by the user.
 Code breaker is played by computer.
-Enter secret code: 3546
-2465 .www
-1346 .wbb
-4646 wwbb
-3546 bbbb
+Code breaker is using algorithm 1
+Enter secret code: 1234
+6556 [0, 0]
+3456 [0, 2]
+4465 [0, 2]
+6536 [1, 0]
+etc
 ```
