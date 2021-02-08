@@ -1,4 +1,6 @@
 import random
+import time
+
 
 class CodeMaker(object):
     def make_code(self):
@@ -70,6 +72,7 @@ class ComputerCodeMaker(CodeMaker):
     def make_code(self):
         # computer invents a random secret code
         self._code = self._game_utils.random_code()
+        print(self._code)
 
     def give_feedback(self, guess):
         # computer gives automated feedback based on guess and secret code
@@ -99,19 +102,15 @@ class HumanCodeBreaker(CodeBreaker):
 class ComputerCodeBreaker(CodeBreaker):
     def __init__(self, game_utils, algorithm):
         self._game_utils = game_utils
-        # valid_guess matrix (n_positions, n_colors) describes
-        # all possible guesses by enumerating (position, color) pairs
-        self._valid_guess = [[True for _ in range(game_utils.n_colors)] for _ in range(game_utils.n_positions)]
-        # set of all yet unseen colors
-        self._unseen_colors = set([color for color in range(game_utils.n_colors)])
-        # set of all right colors
-        self._right_colors = set()
-        # flag whether all right colors have been found
-        self._right_colors_found = False
+
         # most recent feedback
         self._received_feedback = []
         #tries
         self._tries = 0
+        #most recent guess
+        self._most_recent_guess = ''
+        #most recent feedback
+        self._most_recent_feedback= []
         #list of all combinations
         self._allList = []
         #list of all current options
@@ -134,20 +133,37 @@ class ComputerCodeBreaker(CodeBreaker):
 
 
     def _make_guess(self, algorithm):
-        #this is where the guessing algorithm goes, right now this is not implemented
-        #currently my algorithm is amazingly stupid
-        #it just guesses a random choice in list of possible combinations
-        #doesnt even remember that it's already guessed something
+        #updated simple strategy
+        #this is still not completely done, this takes 10 tries on average where
+        #simple strategy should take about 5.7
+        #find out wtf im not doing right yet
+
 
         if algorithm == 1:  ##simple strategy
+            print(f'secrets length:{len(self._possiblesecrets)}, tries: {self._tries}')
 
-            #hardcoded first guess
-            if self._tries == 0:
-                current_guess = [1,1,2,3]
-            else:
+            if self._tries == 1:
                 current_guess = random.choice(self._allList)
+                self._most_recent_guess = current_guess
+                self._possiblesecrets.remove(current_guess)
+                return current_guess
 
-            return current_guess
+            elif len(self._possiblesecrets) > 1:
+                for secret in self._possiblesecrets:
+                    secretfeedback = _auto_feedback(secret, self._most_recent_guess)
+                    recentfeedback = self._most_recent_feedback
+                    if secretfeedback != recentfeedback:
+                        self._possiblesecrets.remove(secret)
+                        print(f'removing: {secret} because {secretfeedback} is not equal to {recentfeedback}')
+                print(f'we maken nu een keuze uit een lijst van secrets van {len(self._possiblesecrets)} secrets')
+                current_guess = random.choice(self._possiblesecrets)
+                self._most_recent_guess = current_guess
+                if len(self._possiblesecrets) > 1:
+                    self._possiblesecrets.remove(current_guess)
+                return current_guess
+            else:
+                current_guess = self._possiblesecrets[0]
+                return current_guess
 
         elif algorithm == 2:
             print('do nothing')
@@ -155,7 +171,9 @@ class ComputerCodeBreaker(CodeBreaker):
             print('do nothing')
 
     def receive_feedback(self, guess, feedback):
-        #append the feedback to a list of lists
+        #save the most recently received feedback
+        self._most_recent_feedback = feedback
+        #save all feedback in a list
         self._received_feedback += [feedback]
 
 class MastermindGameUtils(object):
