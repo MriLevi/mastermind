@@ -1,4 +1,5 @@
 import random
+import itertools as iter
 
 
 class CodeMaker(object):
@@ -84,7 +85,7 @@ class HumanCodeBreaker(CodeBreaker):
     def __init__(self, game_utils):
         self._game_utils = game_utils
 
-    def make_guess(self):
+    def make_guess(self, tries):
         # user enters next guess
         while True:
             try:
@@ -109,120 +110,57 @@ class ComputerCodeBreaker(CodeBreaker):
         self._right_colors = set()
         # flag whether all right colors have been found
         self._right_colors_found = False
+        # most recent feedback
+        self._received_feedback = []
+        #tries
+        self._tries = 0
+        #list of all combinations
+        self._allList = []
+        #list of all current options
+        self._optionList = []
+        for getal1 in range(1, 7):
+            for getal2 in range(1, 7):
+                for getal3 in range(1, 7):
+                    for getal4 in range(1, 7):
+                        self._allList.append([getal1, getal2, getal3, getal4])
+                        self._optionList.append([getal1, getal2, getal3, getal4])
 
     def make_guess(self, tries):
         current_guess = [None] * self._game_utils.n_positions
         # remove colors that are wrong
         colors_to_check = [color in self._right_colors or color in self._unseen_colors for color in
                            range(self._game_utils.n_colors)]
+        self._tries = tries
 
-        if tries == 1:                #this counts the number of tries
-            current_guess = [1,1,2,3] #if this is the first guess, supply [1,1,2,3] as current_guess
-        return self._make_guess(current_guess, colors_to_check, _args.algorithm)
+        return self._make_guess(_args.algorithm)
 
 
-    def _make_guess(self, current_guess, colors_to_check, algorithm, current_position=0):
+    def _make_guess(self, algorithm):
         # performs depth first search for a valid guess using information in the guess matrix
         # for selecting a color in any given position
 
-        if current_position == self._game_utils.n_positions:
-            # guess has been made so return it
+        if algorithm == 1:  ##simple strategy
+            # prepare all viable colors at this position given information so far
+            if self._tries == 0:
+                current_guess = [1,1,2,3]
+            else:
+                current_guess = random.choice(self._allList)
+            feedback = self._received_feedback
+
             return current_guess
-        elif algorithm == 1:  ##simple strategy
-            # prepare all viable colors at this position given information so far
-            valid_colors = [color for color in range(self._game_utils.n_colors)
-                            if colors_to_check[color] and self._valid_guess[current_position][color]]
-            # shuffle colors to add some randomness to the selection
-            random.shuffle(valid_colors)
-            # try each valid color in current position until a valid guess has been found
-            if self._game_utils.duplicates_allowed:
-                for color in valid_colors:
-                    current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, algorithm, current_position + 1) is not None:
-                        return current_guess
-            else:
-                for color in valid_colors:
-                    colors_to_check[color] = False
-                    current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, algorithm, current_position + 1) is not None:
-                        return current_guess
-                    else:
-                        colors_to_check[color] = True
-            # no color was valid in this position so go back to previous position and continue search from there
-            return None
+
         elif algorithm == 2:
-            if current_guess == [1,1,2,3]: ## 1st guess is always 1,1,2,3, which is supplied from make_guess if it's the first try.
-                return current_guess
-            # prepare all viable colors at this position given information so far
-            valid_colors = [color for color in range(self._game_utils.n_colors)
-                            if colors_to_check[color] and self._valid_guess[current_position][color]]
-            # shuffle colors to add some randomness to the selection
-            random.shuffle(valid_colors)
-            # try each valid color in current position until a valid guess has been found
-            if self._game_utils.duplicates_allowed:
-                for color in valid_colors:
-                    current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, algorithm,
-                                        current_position + 1) is not None:
-                        return current_guess
-            else:
-                for color in valid_colors:
-                    colors_to_check[color] = False
-                    current_guess[current_position] = color + 1
-                    if self._make_guess(current_guess, colors_to_check, algorithm,
-                                        current_position + 1) is not None:
-                        return current_guess
-                    else:
-                        colors_to_check[color] = True
-            # no color was valid in this position so go back to previous position and continue search from there
-            return None
+            print('do nothing')
         elif algorithm == 3:
             print('do nothing')
 
     def receive_feedback(self, guess, feedback):
+        # !!! this part is still wrong !!!
+        # !!! it uses feedback pegs in a positional way, but feedback pegs do not give positional information !!!
+        # !!! need to rewrite this !!!
+
         # updates guess matrix according to the information from code maker
-        for pos, (peg, color) in enumerate(zip(feedback, guess)):
-            if color - 1 in self._unseen_colors:
-                self._unseen_colors.remove(color - 1)
-            # guessed color is in the right position
-            if peg == 'b':
-                if not self._game_utils.duplicates_allowed:
-                    # guessed color may not be repeated in another position
-                    # invalidate corresponding matrix entries
-                    for _pos in range(self._game_utils.n_positions):
-                        self._valid_guess[_pos][color - 1] = False
-                # no other color may be used for this position
-                # invalidate corresponding matrix entries
-                for _col in range(self._game_utils.n_colors):
-                    self._valid_guess[pos][_col] = False
-                # update matrix entry to reflect correctly guessed color in this position
-                self._valid_guess[pos][color - 1] = True
-                self._right_colors.add(color - 1)
-            # guessed color is right but in a wrong position
-            elif peg == 'w':
-                # this color must appear in some other position
-                self._valid_guess[pos][color - 1] = False
-                self._right_colors.add(color - 1)
-            # wrong color
-            else:
-                # guessed color does not appear in the code
-                # invalidate all entries corresponding to this color
-                for _pos in range(0, self._game_utils.n_positions):
-                    self._valid_guess[_pos][color - 1] = False
-        # if all guessed colors are right there is no need to check yet unseen colors
-        if not self._right_colors_found:
-            if self._check_right_colors_found():
-                self._unseen_colors = set()
-                self._right_colors_found = True
-
-    def _check_right_colors_found(self):
-        if not self._game_utils.duplicates_allowed:
-            # if duplicates are not allowed check if right color for each position was found
-            return len(self._right_colors) == self._game_utils.n_positions
-        else:
-            # else make sure there are no unseen colors
-            return not self._unseen_colors
-
+        self._received_feedback += [guess, feedback]
 
 class MastermindGameUtils(object):
     def __init__(self, n_colors=6, n_positions=4, duplicates_allowed=True):
