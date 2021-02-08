@@ -1,6 +1,4 @@
 import random
-import itertools as iter
-
 
 class CodeMaker(object):
     def make_code(self):
@@ -57,7 +55,7 @@ class HumanCodeMaker(CodeMaker):
                     try:
                         guess_as_string = "".join([str(color) for color in guess])
                         return self._game_utils.validate_feedback(
-                            input("Enter feedback for {}: ".format(guess_as_string)))
+                            input("Enter feedback for {} in the form of 1,2 where 1 is black pegs, 2 is white pegs: ".format(guess_as_string)))
                     except ValueError as e:
                         print("Entered feedback is invalid: {}".format(e))
         else:
@@ -156,7 +154,7 @@ class ComputerCodeBreaker(CodeBreaker):
 
     def receive_feedback(self, guess, feedback):
         #append the feedback to a list of lists
-        self._received_feedback += [guess, feedback]
+        self._received_feedback += [feedback]
 
 class MastermindGameUtils(object):
     def __init__(self, n_colors=6, n_positions=4, duplicates_allowed=True):
@@ -181,11 +179,18 @@ class MastermindGameUtils(object):
         return code
 
     def validate_feedback(self, feedback):
-        if len(feedback) != self.n_positions:
-            raise ValueError("feedback must consist of exactly {} pegs".format(self.n_positions))
-        for peg in feedback:
-            if peg not in "bw.":
-                raise ValueError("peg must be one of following: 'b', 'w', '.'")
+        #check if feedback input is in right format x,y where x,y are ints
+        if len(feedback) != 3 or feedback[1] != ',' or not feedback[0].isnumeric() or not feedback[2].isnumeric():
+            raise ValueError("feedback must be in format x,y where x is black bins and y is white pins")
+        #check if user does not give more pins than there are positions
+        elif int(feedback[0]) > self.n_positions < int(feedback[2]):
+            raise ValueError(f'cant give more feedback than positions')
+        #check if user does not give more total pins than positions
+        elif int(feedback[0]) + int(feedback[2]) > self.n_positions:
+            raise ValueError(f'youre giving too many pins')
+
+        feedback = [int(feedback[0]), int(feedback[2])] #zet de feedback om naar juiste format
+
         return feedback
 
     def random_code(self, duplicates_allowed=None):
@@ -224,7 +229,7 @@ def play_mastermind(code_maker, code_breaker):
         guess = code_breaker.make_guess(tries)
         if guess is not None:
             feedback = code_maker.give_feedback(guess)
-            guess_as_string = "".join([str(color) for color in guess])
+            guess_as_string = "".join([str(color) for color in guess]) #zetten de code om naar een string zodat het er mooier uit zien
             print(guess_as_string, feedback)
             if _is_guess_correct(feedback):
                 with open('results.txt', "a") as f: #append the results to a txt file, used for me to check big samples quickly, probably not in final product
