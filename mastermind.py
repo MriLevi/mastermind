@@ -115,35 +115,37 @@ class ComputerCodeBreaker(CodeBreaker):
         #list of all combinations
         self._allList = []
         #list of all current options
-        self._optionList = []
+        self._possiblesecrets = []
+
+        #populate the lists on initialization of the program
         for getal1 in range(1, 7):
             for getal2 in range(1, 7):
                 for getal3 in range(1, 7):
                     for getal4 in range(1, 7):
                         self._allList.append([getal1, getal2, getal3, getal4])
-                        self._optionList.append([getal1, getal2, getal3, getal4])
+                        self._possiblesecrets.append([getal1, getal2, getal3, getal4])
 
     def make_guess(self, tries):
-        current_guess = [None] * self._game_utils.n_positions
-        # remove colors that are wrong
-        colors_to_check = [color in self._right_colors or color in self._unseen_colors for color in
-                           range(self._game_utils.n_colors)]
+        #keep track of the tries weve done so far
         self._tries = tries
+        #this function might be redundant, could probably just call _make_guess instead
 
         return self._make_guess(_args.algorithm)
 
 
     def _make_guess(self, algorithm):
-        # performs depth first search for a valid guess using information in the guess matrix
-        # for selecting a color in any given position
+        #this is where the guessing algorithm goes, right now this is not implemented
+        #currently my algorithm is amazingly stupid
+        #it just guesses a random choice in list of possible combinations
+        #doesnt even remember that it's already guessed something
 
         if algorithm == 1:  ##simple strategy
-            # prepare all viable colors at this position given information so far
+
+            #hardcoded first guess
             if self._tries == 0:
                 current_guess = [1,1,2,3]
             else:
                 current_guess = random.choice(self._allList)
-            feedback = self._received_feedback
 
             return current_guess
 
@@ -206,12 +208,14 @@ class MastermindGameUtils(object):
 
 def _is_guess_correct(feedback):
     if feedback is not None:
-        if feedback == [4,0]:
+        if feedback == [4,0]: #win the game!
             return True
-        return False
+        return False #keep going
 
 
 def _auto_feedback(code, guess):
+    #here we automatically generate feedback
+    #this is useful to be able to simulate a lot of games to get statistics
     feedback = [0,0]
     for guessed_color, actual_color in zip(guess, code):
         if guessed_color == actual_color:
@@ -229,14 +233,14 @@ def play_mastermind(code_maker, code_breaker):
         guess = code_breaker.make_guess(tries)
         if guess is not None:
             feedback = code_maker.give_feedback(guess)
-            guess_as_string = "".join([str(color) for color in guess]) #zetten de code om naar een string zodat het er mooier uit zien
+            guess_as_string = "".join([str(color) for color in guess]) #convert code to string for nice looks
             print(guess_as_string, feedback)
-            if _is_guess_correct(feedback):
-                with open('results.txt', "a") as f: #append the results to a txt file, used for me to check big samples quickly, probably not in final product
+            if _is_guess_correct(feedback): #if the game is won
+                with open('results.txt', "a") as f: #append the results to a txt file, probably not in final product
                     f.write(f'{tries}\n')
                     f.close()
                 return print(f'Correct! in {tries}')
-            else:
+            else: #if the game hasnt been won
                 code_breaker.receive_feedback(guess, feedback)
         else:
             return print("Guess could not be made. Make sure your input is valid.")
