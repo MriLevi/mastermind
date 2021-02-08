@@ -155,11 +155,7 @@ class ComputerCodeBreaker(CodeBreaker):
             print('do nothing')
 
     def receive_feedback(self, guess, feedback):
-        # !!! this part is still wrong !!!
-        # !!! it uses feedback pegs in a positional way, but feedback pegs do not give positional information !!!
-        # !!! need to rewrite this !!!
-
-        # updates guess matrix according to the information from code maker
+        #append the feedback to a list of lists
         self._received_feedback += [guess, feedback]
 
 class MastermindGameUtils(object):
@@ -205,22 +201,18 @@ class MastermindGameUtils(object):
 
 def _is_guess_correct(feedback):
     if feedback is not None:
-        for peg in feedback:
-            if peg != 'b':
-                return False
-        return True
-    return False
+        if feedback == [4,0]:
+            return True
+        return False
 
 
 def _auto_feedback(code, guess):
-    feedback = ""
+    feedback = [0,0]
     for guessed_color, actual_color in zip(guess, code):
         if guessed_color == actual_color:
-            feedback += 'b'
+            feedback[0] += 1
         elif guessed_color in code:
-            feedback += 'w'
-        else:
-            feedback += '.'
+            feedback[1] += 1
     return feedback
 
 
