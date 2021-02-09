@@ -144,10 +144,8 @@ class ComputerCodeBreaker(CodeBreaker):
             #make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
             recentfeedback = self._most_recent_feedback
-            print(f'length of secrets {len(self._possiblesecrets)}, tries: {self._tries}')
 
-            if self._tries == 1:
-                print('hier')
+            if self._tries == 0:
                 current_guess = self._possiblesecrets[0]
                 self._most_recent_guess = current_guess
                 return current_guess
@@ -233,16 +231,25 @@ def _is_guess_correct(feedback):
 def _auto_feedback(code, guess):
     #here we automatically generate feedback
     #this is useful to be able to simulate a lot of games to get statistics
+
+    #make default feedback
     feedback = [0,0]
+    #copy the code and the guess so we edit those and not the original
     codecopy = code.copy()
     guesscopy = guess.copy()
-    for i in range(0, len(codecopy)):
-        if codecopy[i] == guesscopy[i]:
+
+    #calculate the feedback
+    #first, check for black pins, and remove the corresponding entries from the copied list
+    for i in range(0, len(code)):
+        if code[i] == guess[i]:
             feedback[0] += 1
-            codecopy[i] = 'matched'
-    for i in range(0, len(codecopy)):
-        if guesscopy[i] in codecopy and guesscopy[i] != codecopy[i]:
+            guesscopy.remove(guess[i])
+            codecopy.remove(code[i])
+    #then, check for white pins by checking if non-matched positions are present in trimmed copy list
+    for i in range(0, len(guesscopy)):
+        if guesscopy[i] in codecopy:
             feedback[1] +=1
+            codecopy.remove(guesscopy[i]) #once we find a white pin, remove corresponding entry so we dont duplicate it
 
     return feedback
 
@@ -251,8 +258,8 @@ def play_mastermind(code_maker, code_breaker):
     code_maker.make_code()
     tries=0
     while True:
-        tries+=1 #keep track of the amount of tries
         guess = code_breaker.make_guess(tries)
+        tries += 1  # keep track of the amount of tries
         if guess is not None:
             feedback = code_maker.give_feedback(guess)
             guess_as_string = "".join([str(color) for color in guess]) #convert code to string for nice looks
