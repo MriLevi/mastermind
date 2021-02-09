@@ -1,5 +1,9 @@
+### this code is forked and based off https://github.com/kweimann/mastermind
+### I've had to adjust quite a few modules and functions, but a good amount of them have been left as is
+### I will annotate which ones have been written by me or extensively rewritten by me.
+### Most of the class based structure was already in place.
+
 import random
-import time
 
 
 class CodeMaker(object):
@@ -34,6 +38,13 @@ class CodeBreaker(object):
 
 
 class HumanCodeMaker(CodeMaker):
+    '''
+    This class is used when the user selects to play as codemaker.
+    it initializes, asks the user to input a code and validates it
+    then it also asks for feedback, unless the program is started with the autofeedback flag.
+    if feedback is done manually, we also evaluate it by calling validate_feedback
+    '''
+
     def __init__(self, game_utils, auto_feedback=False):
         self._game_utils = game_utils
         self._auto_feedback = auto_feedback
@@ -65,6 +76,12 @@ class HumanCodeMaker(CodeMaker):
 
 
 class ComputerCodeMaker(CodeMaker):
+    '''
+    This class is called when the codemaker is selected to be a computer.
+    It initialises, loads game_utils, makes a random code
+    and provides the other player (computer or human) with feedback
+    '''
+
     def __init__(self, game_utils):
         self._game_utils = game_utils
         self._code = None
@@ -83,6 +100,10 @@ class ComputerCodeMaker(CodeMaker):
 
 
 class HumanCodeBreaker(CodeBreaker):
+    '''
+    this class is used when user selects to play as codebreaker.
+    It asks the user to input a guess, and validates that code.
+    '''
     def __init__(self, game_utils):
         self._game_utils = game_utils
 
@@ -100,10 +121,18 @@ class HumanCodeBreaker(CodeBreaker):
 
 
 class ComputerCodeBreaker(CodeBreaker):
-    def __init__(self, game_utils, algorithm):
+    '''
+    This class is used when the computer is playing as the CodeBreaker.
+    Most if not all of the code here was written by me.
+    On initialization, it loads a few useful parameters and populates the starting list of possible secrets.
+    In this class, we also can find the implemented guessing algorithms.
+    Based on the value chosen for the -algorithm parser flag
+    the computer can use different guessing algorithms to return a next guess.
+    '''
+    def __init__(self, game_utils):
+        '''most of these variables were programmed in by me'''
         self._game_utils = game_utils
-
-        # most recent feedback
+        # list of all received feedback so far, not sure if this is gonna be used yet
         self._received_feedback = []
         #tries
         self._tries = 0
@@ -116,7 +145,9 @@ class ComputerCodeBreaker(CodeBreaker):
         #list of all current options
         self._possiblesecrets = []
 
-        #populate the lists on initialization of the program
+
+
+        #populate the lists of possible secrets on initialization of the program
         for getal1 in range(1, 7):
             for getal2 in range(1, 7):
                 for getal3 in range(1, 7):
@@ -125,23 +156,19 @@ class ComputerCodeBreaker(CodeBreaker):
                         self._possiblesecrets.append([getal1, getal2, getal3, getal4])
 
     def make_guess(self, tries):
+        '''
+        All code below is made by Levi Verhoef
+        Algorithm 1 is the simple strategy by Shapiro.
+        Algorithm 2 is the simple strategy by shapiro but with a random guess instead of first list element
+        '''
+        algorithm = _args.algorithm
         #keep track of the tries weve done so far
         self._tries = tries
-        #this function might be redundant, could probably just call _make_guess instead
-
-        return self._make_guess(_args.algorithm)
-
-
-    def _make_guess(self, algorithm):
-        #updated simple strategy
-        #this is still not completely done, this takes 10 tries on average where
-        #simple strategy should take about 5.7
-        #find out wtf im not doing right yet
 
 
         if algorithm == 1:  ##simple strategy
 
-            #make a copy of list of possible secrets
+            # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
             recentfeedback = self._most_recent_feedback
 
@@ -162,7 +189,7 @@ class ComputerCodeBreaker(CodeBreaker):
                 print(self._possiblesecrets)
                 current_guess = self._possiblesecrets[0]
                 return current_guess
-        elif algorithm == 2: ## simple strategy with random choice
+        elif algorithm == 2:  ## simple strategy with random choice
             # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
             recentfeedback = self._most_recent_feedback
@@ -194,6 +221,13 @@ class ComputerCodeBreaker(CodeBreaker):
         self._received_feedback += [feedback]
 
 class MastermindGameUtils(object):
+    '''
+
+    This class contains a few useful functions that are used throughout the game.
+    On initalization it sets n_colors and n_positions based on flags used
+    It also contains the utility to validate code and validate feedback
+    '''
+
     def __init__(self, n_colors=6, n_positions=4, duplicates_allowed=True):
         if not duplicates_allowed and n_positions > n_colors:
             raise ValueError("not enough colors for this number of positions")
@@ -202,6 +236,11 @@ class MastermindGameUtils(object):
         self.duplicates_allowed = duplicates_allowed
 
     def validate_code(self, code):
+        '''
+        This function validates a given code. It starts by converting the code to a list of ints.
+        Then it checks wether the code is of the right length
+        Then it checks if the colors are all between the chosen n_colors.
+        '''
         try:
             code = [int(color) for color in code]
         except (TypeError, ValueError):
@@ -216,6 +255,14 @@ class MastermindGameUtils(object):
         return code
 
     def validate_feedback(self, feedback):
+        '''
+        function rewritten by Levi Verhoef
+        this function validates feedback given by user
+        it's kinda hacky but it works
+        it checks if given feedback follows the x,y format
+        it also checks if theres not more white or black pins than there are positions
+        and lastly it checks wether the sum of white and black pins doesnt exceed the amount of positions
+        '''
         #check if feedback input is in right format x,y where x,y are ints
         if len(feedback) != 3 or feedback[1] != ',' or not feedback[0].isnumeric() or not feedback[2].isnumeric():
             raise ValueError("feedback must be in format x,y where x is black bins and y is white pins")
@@ -231,6 +278,9 @@ class MastermindGameUtils(object):
         return feedback
 
     def random_code(self, duplicates_allowed=None):
+        '''
+        This function returns a random code based on given parameters.
+        '''
         if duplicates_allowed is None:
             duplicates_allowed = self.duplicates_allowed
         elif duplicates_allowed is True and self.duplicates_allowed is False:
@@ -242,6 +292,11 @@ class MastermindGameUtils(object):
 
 
 def _is_guess_correct(feedback):
+    '''
+    Function written by Levi Verhoef
+    This simple function simply checks if we've found the right answer.
+    '''
+
     if feedback is not None:
         if feedback == [4,0]: #win the game!
             return True
@@ -249,8 +304,12 @@ def _is_guess_correct(feedback):
 
 
 def _auto_feedback(code, guess):
-    #here we automatically generate feedback
-    #this is useful to be able to simulate a lot of games to get statistics
+    '''
+    function written by Levi Verhoef
+    this function automatically generates feedback for guesses
+    this is used by default for computercodebreaker
+    can also be used for a human codebreaker by using the flag --auto_feedback
+    '''
 
     #make default feedback
     feedback = [0,0]
@@ -265,16 +324,24 @@ def _auto_feedback(code, guess):
             feedback[0] += 1
             guesscopy.remove(guess[i])
             codecopy.remove(code[i])
+
     #then, check for white pins by checking if non-matched positions are present in trimmed copy list
+    #once we find a white pin, remove corresponding entry to prevent assigning too many white pins.
     for i in range(0, len(guesscopy)):
         if guesscopy[i] in codecopy:
             feedback[1] +=1
-            codecopy.remove(guesscopy[i]) #once we find a white pin, remove corresponding entry so we dont duplicate it
+            codecopy.remove(guesscopy[i])
 
     return feedback
 
 
 def play_mastermind(code_maker, code_breaker):
+    '''
+    this is the main game loop and is used in any configuration (human vs human, cpu vs human or cpu vs cpu)
+    i slightly modified this by adding a counter to keep track of the amount of tries
+    i also added a text output module so I can run this file a lot of times to generate a big sample size
+    to be able to test my algorithms and get an idea of average tries
+    '''
     code_maker.make_code()
     tries=0
     while True:
@@ -300,7 +367,10 @@ if __name__ == "__main__":
     usage: mastermind.py [-h] [-colors COLORS] [-positions POSITIONS] [--maker]
                          [--breaker] [--no_duplicates] [--auto_feedback] [--rules]
     
-    play mastermind board game
+    play mastermind board game, computer guesses based on a selected algorithm
+    Algorithm 1 = Simple Strategy by Shapiro. Average guesses: 5.76
+    Algorithm 2 = Simple Strategy with random choice by me. Average guesses: 4,62
+    Algorithm 3 = Worst Case strategy. not implemented yet.
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -360,6 +430,6 @@ if __name__ == "__main__":
     else:
         print("Code breaker is played by computer.")
         print(f"Code breaker is using algorithm {_args.algorithm}")
-        _code_breaker = ComputerCodeBreaker(_game_utils, _args.algorithm)
+        _code_breaker = ComputerCodeBreaker(_game_utils)
 
     play_mastermind(_code_maker, _code_breaker)
