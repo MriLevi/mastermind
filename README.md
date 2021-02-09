@@ -9,7 +9,9 @@ Code maker invents a secret code and provides feedback to the code breaker. Code
 By default, code is a combination of 4 colors numbered from 1 to 6. Colors may repeat.
         
 Feedback is given in the form of x,y
+
 x represents the amount of colors that are correct, and in the correct position
+
 y represents the amount of colors that are correct, but in the wrong position
 # Usage
 ```
