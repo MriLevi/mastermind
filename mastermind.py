@@ -141,27 +141,29 @@ class ComputerCodeBreaker(CodeBreaker):
 
         if algorithm == 1:  ##simple strategy
 
+            #make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
             recentfeedback = self._most_recent_feedback
+            print(f'length of secrets {len(self._possiblesecrets)}, tries: {self._tries}')
 
             if self._tries == 1:
-                current_guess = random.choice(self._possiblesecrets)
+                print('hier')
+                current_guess = self._possiblesecrets[0]
                 self._most_recent_guess = current_guess
-                self._possiblesecrets.remove(current_guess)
                 return current_guess
 
             elif len(self._possiblesecrets) > 1:
                 for secret in templist:
                     if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
                         self._possiblesecrets.remove(secret)
-                current_guess = random.choice(self._possiblesecrets)
-                self._most_recent_guess = current_guess
-                self._possiblesecrets.remove(current_guess)
-                return current_guess
-            else:
                 current_guess = self._possiblesecrets[0]
+                self._most_recent_guess = current_guess
                 return current_guess
 
+            else:
+                print(self._possiblesecrets)
+                current_guess = self._possiblesecrets[0]
+                return current_guess
         elif algorithm == 2:
             print('do nothing')
         elif algorithm == 3:
@@ -232,11 +234,16 @@ def _auto_feedback(code, guess):
     #here we automatically generate feedback
     #this is useful to be able to simulate a lot of games to get statistics
     feedback = [0,0]
-    for guessed_color, actual_color in zip(guess, code):
-        if guessed_color == actual_color:
+    codecopy = code.copy()
+    guesscopy = guess.copy()
+    for i in range(0, len(codecopy)):
+        if codecopy[i] == guesscopy[i]:
             feedback[0] += 1
-        elif guessed_color in code:
-            feedback[1] += 1
+            codecopy[i] = 'matched'
+    for i in range(0, len(codecopy)):
+        if guesscopy[i] in codecopy and guesscopy[i] != codecopy[i]:
+            feedback[1] +=1
+
     return feedback
 
 
