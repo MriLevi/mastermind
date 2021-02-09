@@ -140,26 +140,23 @@ class ComputerCodeBreaker(CodeBreaker):
 
 
         if algorithm == 1:  ##simple strategy
-            print(f'secrets length:{len(self._possiblesecrets)}, tries: {self._tries}')
+
+            templist = self._possiblesecrets.copy()
+            recentfeedback = self._most_recent_feedback
 
             if self._tries == 1:
-                current_guess = random.choice(self._allList)
+                current_guess = random.choice(self._possiblesecrets)
                 self._most_recent_guess = current_guess
                 self._possiblesecrets.remove(current_guess)
                 return current_guess
 
             elif len(self._possiblesecrets) > 1:
-                for secret in self._possiblesecrets:
-                    secretfeedback = _auto_feedback(secret, self._most_recent_guess)
-                    recentfeedback = self._most_recent_feedback
-                    if secretfeedback != recentfeedback:
+                for secret in templist:
+                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
                         self._possiblesecrets.remove(secret)
-                        print(f'removing: {secret} because {secretfeedback} is not equal to {recentfeedback}')
-                print(f'we maken nu een keuze uit een lijst van secrets van {len(self._possiblesecrets)} secrets')
                 current_guess = random.choice(self._possiblesecrets)
                 self._most_recent_guess = current_guess
-                if len(self._possiblesecrets) > 1:
-                    self._possiblesecrets.remove(current_guess)
+                self._possiblesecrets.remove(current_guess)
                 return current_guess
             else:
                 current_guess = self._possiblesecrets[0]
