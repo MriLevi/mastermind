@@ -38,15 +38,15 @@ y represents the amount of colors that are correct, but in the wrong position
 # Example
 `python3 mastermind.py --maker --auto_feedback` output:
 ```
-Code maker is played by computer.
+Code maker is played by the user.
 Code breaker is played by computer.
 Code breaker is using algorithm 1
-[5, 6, 1, 3]
+Enter secret code: 3145
 1111 [1, 0]
 1222 [0, 1]
-3133 [1, 1]
-3414 [1, 1]
-3551 [0, 3]
-5613 [4, 0]
-Correct! in 6
+3133 [2, 0]
+3144 [3, 0]
+3145 [4, 0]
+Correct! in 5
+
 ```
