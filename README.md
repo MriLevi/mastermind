@@ -1,5 +1,5 @@
 # Mastermind
-Python implementation of [Mastermind](https://en.wikipedia.org/wiki/Mastermind_(board_game)) board game. Both roles may be played by either the user or computer. Furthermore, computer code breaker uses a greedy guessing algorithm.
+Python implementation of [Mastermind](https://en.wikipedia.org/wiki/Mastermind_(board_game)) board game. Both roles may be played by either the user or computer. Furthermore, computer can use multiple algorithms.
 
 # Rules
 User may assume any of the two roles: code maker or code breaker. Role(s) not selected by the user will be played by computer.
@@ -16,7 +16,10 @@ y represents the amount of colors that are correct, but in the wrong position
     usage: mastermind.py [-h] [-colors COLORS] [-positions POSITIONS] [--maker]
                          [--breaker] [--no_duplicates] [--auto_feedback] [--rules]
     
-    play mastermind board game
+    play mastermind board game, computer guesses based on a selected algorithm
+    Algorithm 1 = Simple Strategy by Shapiro. Average guesses: 5.76
+    Algorithm 2 = Simple Strategy with random choice by me. Average guesses: 4,62
+    Algorithm 3 = Worst Case strategy. not implemented yet.
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -33,13 +36,15 @@ y represents the amount of colors that are correct, but in the wrong position
 # Example
 `python3 mastermind.py --maker --auto_feedback` output:
 ```
-Code maker is played by the user.
+Code maker is played by computer.
 Code breaker is played by computer.
 Code breaker is using algorithm 1
-Enter secret code: 1234
-6556 [0, 0]
-3456 [0, 2]
-4465 [0, 2]
-6536 [1, 0]
-etc
+[5, 6, 1, 3]
+1111 [1, 0]
+1222 [0, 1]
+3133 [1, 1]
+3414 [1, 1]
+3551 [0, 3]
+5613 [4, 0]
+Correct! in 6
 ```
