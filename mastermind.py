@@ -162,8 +162,28 @@ class ComputerCodeBreaker(CodeBreaker):
                 print(self._possiblesecrets)
                 current_guess = self._possiblesecrets[0]
                 return current_guess
-        elif algorithm == 2:
-            print('do nothing')
+        elif algorithm == 2: ## simple strategy with random choice
+            # make a copy of list of possible secrets
+            templist = self._possiblesecrets.copy()
+            recentfeedback = self._most_recent_feedback
+
+            if self._tries == 0:
+                current_guess = [1, 1, 2, 3]
+                self._most_recent_guess = current_guess
+                return current_guess
+
+            elif len(self._possiblesecrets) > 1:
+                for secret in templist:
+                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
+                        self._possiblesecrets.remove(secret)
+                current_guess = random.choice(self._possiblesecrets)
+                self._most_recent_guess = current_guess
+                return current_guess
+
+            else:
+                print(self._possiblesecrets)
+                current_guess = self._possiblesecrets[0]
+                return current_guess
         elif algorithm == 3:
             print('do nothing')
 
