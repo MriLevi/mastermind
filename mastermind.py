@@ -166,7 +166,7 @@ class ComputerCodeBreaker(CodeBreaker):
         self._tries = tries
 
 
-        if algorithm == 1:  ##simple strategy
+        if algorithm == 3:  ##simple strategy
 
             # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
@@ -209,48 +209,48 @@ class ComputerCodeBreaker(CodeBreaker):
             else:
                 current_guess = self._possiblesecrets[0]
                 return current_guess
-        elif algorithm == 3: ## worst case
-            # make a copy of list of possible secrets
-            templist = self._possiblesecrets.copy()
+        elif algorithm == 1: ## worst case
 
+            # make a copy of list of possible secrets so we dont screw up our for loop
+
+            templist = self._possiblesecrets.copy()
             if self._tries == 0:
                 current_guess = [1, 1, 2, 2]
                 self._most_recent_guess = current_guess
                 return current_guess
-
-            elif len(self._possiblesecrets) > 1:
+            elif len(self._possiblesecrets) == 1:
+                current_guess = self._possiblesecrets[0]
+                return current_guess
+            else:
                 scores = {}
                 for secret in templist:
                     if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
                         self._possiblesecrets.remove(secret)
+                if len(self._possiblesecrets) == 1:
+                    current_guess = self._possiblesecrets[0]
+                    return current_guess
 
                 for secret in self._possiblesecrets:
                     feedbackdict = {}
                     for secret2 in self._possiblesecrets:
-                        feedback = _auto_feedback(secret2, secret)  #check every secret with every other secret
-                        feedback = tuple(feedback)                  #we can't pass lists as keys for dicts
-                        try:                                        #save received feedback in feedback dictionary
-                            feedbackdict[feedback] += 1             #start counting how often it occurs
-                        except:
-                            feedbackdict[feedback] = 1
+                            feedback = _auto_feedback(secret, secret2)  #check every secret with every other secret
+                            feedback = tuple(feedback)                  #we can't pass lists as keys for dicts
+                            try:                                        #save received feedback in feedback dictionary
+                                feedbackdict[feedback] += 1             #start counting how often it occurs
+                            except:
+                                feedbackdict[feedback] = 1
                     tuplesecret = tuple(secret)                     #same thing, can't pass lists as key
                     scores[tuplesecret] = max(feedbackdict.values())#save the tested secret and it's maximum matched score
-                if self._tries > 0:
-                    print(f'len:{len(self._possiblesecrets)} secrets:{self._possiblesecrets}')
-                    print(scores)
-
 
                 best = min(scores.values())                         #the best guess has the least matched scores
 
-                #select a random guess that has the best score - there could be multiple
-                current_guess = list(random.choice([guess for guess in scores.keys() if scores[guess] == best]))
+                #select the first guess that has the best score - there could be multiple
+                current_guess = list([guess for guess in scores.keys() if scores[guess] == best][0])
                 self._most_recent_guess = current_guess
+                self._possiblesecrets.remove(current_guess)
                 return current_guess
 
-            else:
-                print(self._possiblesecrets)
-                current_guess = self._possiblesecrets[0]
-                return current_guess
+
 
 
 
