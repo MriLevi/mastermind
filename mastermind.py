@@ -89,7 +89,7 @@ class ComputerCodeMaker(CodeMaker):
     def make_code(self):
         # computer invents a random secret code
         self._code = self._game_utils.random_code()
-        print(self._code)
+        print(f'secret code to guess: {self._code}')
 
     def give_feedback(self, guess):
         # computer gives automated feedback based on guess and secret code
@@ -186,7 +186,6 @@ class ComputerCodeBreaker(CodeBreaker):
                 return current_guess
 
             else:
-                print(self._possiblesecrets)
                 current_guess = self._possiblesecrets[0]
                 return current_guess
         elif algorithm == 2:  ## simple strategy with random choice
@@ -208,11 +207,52 @@ class ComputerCodeBreaker(CodeBreaker):
                 return current_guess
 
             else:
+                current_guess = self._possiblesecrets[0]
+                return current_guess
+        elif algorithm == 3: ## worst case
+            # make a copy of list of possible secrets
+            templist = self._possiblesecrets.copy()
+
+            if self._tries == 0:
+                current_guess = [1, 1, 2, 2]
+                self._most_recent_guess = current_guess
+                return current_guess
+
+            elif len(self._possiblesecrets) > 1:
+                scores = {}
+                for secret in templist:
+                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
+                        self._possiblesecrets.remove(secret)
+
+                for secret in self._possiblesecrets:
+                    feedbackdict = {}
+                    for secret2 in self._possiblesecrets:
+                        feedback = _auto_feedback(secret2, secret)  #check every secret with every other secret
+                        feedback = tuple(feedback)                  #we can't pass lists as keys for dicts
+                        try:                                        #save received feedback in feedback dictionary
+                            feedbackdict[feedback] += 1             #start counting how often it occurs
+                        except:
+                            feedbackdict[feedback] = 1
+                    tuplesecret = tuple(secret)                     #same thing, can't pass lists as key
+                    scores[tuplesecret] = max(feedbackdict.values())#save the tested secret and it's maximum matched score
+                if self._tries > 0:
+                    print(f'len:{len(self._possiblesecrets)} secrets:{self._possiblesecrets}')
+                    print(scores)
+
+
+                best = min(scores.values())                         #the best guess has the least matched scores
+
+                #select a random guess that has the best score - there could be multiple
+                current_guess = list(random.choice([guess for guess in scores.keys() if scores[guess] == best]))
+                self._most_recent_guess = current_guess
+                return current_guess
+
+            else:
                 print(self._possiblesecrets)
                 current_guess = self._possiblesecrets[0]
                 return current_guess
-        elif algorithm == 3:
-            print('do nothing')
+
+
 
     def receive_feedback(self, guess, feedback):
         #save the most recently received feedback
@@ -310,7 +350,6 @@ def _auto_feedback(code, guess):
     this is used by default for computercodebreaker
     can also be used for a human codebreaker by using the flag --auto_feedback
     '''
-
     #make default feedback
     feedback = [0,0]
     #copy the code and the guess so we edit those and not the original
