@@ -144,7 +144,8 @@ class ComputerCodeBreaker(CodeBreaker):
         self._allList = []
         #list of all current options
         self._possiblesecrets = []
-
+        #list of eliminated colors (only used for human algorithm)
+        self._eliminatedcolors = 0
 
 
         #populate the lists of possible secrets on initialization of the program
@@ -156,17 +157,21 @@ class ComputerCodeBreaker(CodeBreaker):
         All code below is made by Levi Verhoef
         Algorithm 1 is the simple strategy by Shapiro.
         Algorithm 2 is the simple strategy by shapiro but with a random guess instead of first list element
+        Algorithm 3 is Knuth's worst case algorithm, I used a few sources for this:
+        Algorithm 4 is my own algorithm. It tries to use probability to calculate the likelihood of a position.
+        https://en.wikipedia.org/wiki/Mastermind_(board_game)
+        https://repl.it/talk/share/~-Knuths-MASTERMIND-algorithm-in-Python-board-game-~/17435
+        
         '''
         algorithm = _args.algorithm
         #keep track of the tries weve done so far
         self._tries = tries
 
 
-        if algorithm == 1:  ##simple strategy
+        if algorithm == 4:  ##simple strategy
 
             # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
-            recentfeedback = self._most_recent_feedback
 
             if self._tries == 0:
                 current_guess = self._possiblesecrets[0]
@@ -182,10 +187,10 @@ class ComputerCodeBreaker(CodeBreaker):
             else:
                 current_guess = self._possiblesecrets[0]
                 return current_guess
+
         elif algorithm == 2:  ## simple strategy with random choice
             # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
-            recentfeedback = self._most_recent_feedback
 
             if self._tries == 0:
                 current_guess = [1, 1, 2, 3]
@@ -231,10 +236,12 @@ class ComputerCodeBreaker(CodeBreaker):
                     self._possiblesecrets.remove(current_guess)
                     return current_guess
 
-                scores = {}
                 ##here we check all secrets vs the remaining possible answers
                 ##we give them a score based on the maximum amount of possible answers it eliminates
                 ##we then choose an option that eliminates the least amount of options
+
+                scores = {}
+
                 for secret in self._allList:
                     feedbackdict = {}
                     for secret2 in self._possiblesecrets:
@@ -244,19 +251,22 @@ class ComputerCodeBreaker(CodeBreaker):
                                 feedbackdict[feedback] += 1             #start counting how often it occurs
                             except:
                                 feedbackdict[feedback] = 1
-                    tuplesecret = tuple(secret)                     #same thing, can't pass lists as key
-                    scores[tuplesecret] = max(feedbackdict.values()) #save the tested secret and it's maximum matched score
+                    tuplesecret = tuple(secret)                         #same thing, can't pass lists as key
+                    scores[tuplesecret] = max(feedbackdict.values())    #save the tested secret and it's maximum matched score
 
-                best = min(scores.values())                         #the best guess has the least matched scores
+                best = min(scores.values())                             #the best guess has the least matched scores
                 #select the first guess that has the best score - there could be multiple
                 best_guesses = [guess for guess in scores.keys() if scores[guess] == best]
                 current_guess = ''
+
+                #check if there's a best option that also has a chance to be the right answer
                 for guess in best_guesses:
                     if guess in self._possiblesecrets:
                         current_guess = guess
                         self._possiblesecrets.remove(current_guess)
                         break
 
+                #if not, take the first guess in the list
                 if current_guess == '':
                     current_guess = best_guesses[0]
 
@@ -264,8 +274,56 @@ class ComputerCodeBreaker(CodeBreaker):
                 self._most_recent_guess = current_guess
                 return current_guess
 
-        elif algorithm == 4:
-            print('do nothing')
+        elif algorithm == 1:
+            '''
+            HUMAN STRATEGY
+            This algorithm tries to eliminate two colors first, and only then starts to actually play smart. 
+            As expected, this is not a very optimal strategy, but it is a very common "human" strategy.
+            '''
+
+            templist = self._possiblesecrets.copy()
+            tries = self._tries
+
+            #if its the first round, always try to eliminate "1" first.
+            if self._tries == 0:
+                current_guess = (1, 1, 1, 1)
+                self._possiblesecrets.remove(current_guess)
+                self._most_recent_guess = current_guess
+                return current_guess
+            #if we have one guess left, guess it.
+            if len(self._possiblesecrets) == 1:
+                current_guess = self._possiblesecrets[0]
+                self._most_recent_guess = current_guess
+                return current_guess
+            #if we have not eliminated 2 colors yet, try the next color
+            if self._eliminatedcolors < 2:
+                if self._most_recent_feedback == [0, 0]: #if last feedback indicates color wasnt present
+                    self._eliminatedcolors += 1          #up the eliminated count
+                    for i in templist:                   #and remove every combination from our list with that color
+                        if tries in i:
+                            self._possiblesecrets.remove(i)
+                    if self._eliminatedcolors == 2:
+                        current_guess = self._possiblesecrets[0]
+                        self._most_recent_guess = current_guess
+                        return current_guess
+                    else:
+                        current_guess = (tries+1, tries+1, tries+1, tries+1)
+                        self._most_recent_guess = current_guess
+                        return current_guess
+                else:
+                    current_guess = (tries+1, tries+1, tries+1, tries+1)
+                    self._most_recent_guess = current_guess
+                    return current_guess
+            else:
+                _reduce(self, templist)
+                current_guess = self._possiblesecrets[0]
+                self._possiblesecrets.remove(current_guess)
+                self._most_recent_guess = current_guess
+                return current_guess
+
+
+
+
 
 
 
