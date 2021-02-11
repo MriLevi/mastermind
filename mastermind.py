@@ -4,7 +4,7 @@
 ### Most of the class based structure was already in place.
 
 import random
-
+from itertools import product
 
 class CodeMaker(object):
     def make_code(self):
@@ -130,7 +130,7 @@ class ComputerCodeBreaker(CodeBreaker):
     the computer can use different guessing algorithms to return a next guess.
     '''
     def __init__(self, game_utils):
-        '''most of these variables were programmed in by me'''
+        '''most of these variables were programmed in by Levi Verhoef'''
         self._game_utils = game_utils
         # list of all received feedback so far, not sure if this is gonna be used yet
         self._received_feedback = []
@@ -148,12 +148,8 @@ class ComputerCodeBreaker(CodeBreaker):
 
 
         #populate the lists of possible secrets on initialization of the program
-        for getal1 in range(1, 7):
-            for getal2 in range(1, 7):
-                for getal3 in range(1, 7):
-                    for getal4 in range(1, 7):
-                        self._allList.append([getal1, getal2, getal3, getal4])
-                        self._possiblesecrets.append([getal1, getal2, getal3, getal4])
+        self._possiblesecrets = list(product(range(1,7), repeat=4))
+        self._allList = list(product(range(1,7), repeat=4))
 
     def make_guess(self, tries):
         '''
@@ -166,7 +162,7 @@ class ComputerCodeBreaker(CodeBreaker):
         self._tries = tries
 
 
-        if algorithm == 3:  ##simple strategy
+        if algorithm == 1:  ##simple strategy
 
             # make a copy of list of possible secrets
             templist = self._possiblesecrets.copy()
@@ -178,9 +174,7 @@ class ComputerCodeBreaker(CodeBreaker):
                 return current_guess
 
             elif len(self._possiblesecrets) > 1:
-                for secret in templist:
-                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
-                        self._possiblesecrets.remove(secret)
+                _reduce(self, templist)
                 current_guess = self._possiblesecrets[0]
                 self._most_recent_guess = current_guess
                 return current_guess
@@ -199,9 +193,7 @@ class ComputerCodeBreaker(CodeBreaker):
                 return current_guess
 
             elif len(self._possiblesecrets) > 1:
-                for secret in templist:
-                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
-                        self._possiblesecrets.remove(secret)
+                _reduce(self, templist)
                 current_guess = random.choice(self._possiblesecrets)
                 self._most_recent_guess = current_guess
                 return current_guess
@@ -209,28 +201,41 @@ class ComputerCodeBreaker(CodeBreaker):
             else:
                 current_guess = self._possiblesecrets[0]
                 return current_guess
-        elif algorithm == 1: ## worst case
+
+        elif algorithm == 3: ## worst case
 
             # make a copy of list of possible secrets so we dont screw up our for loop
 
             templist = self._possiblesecrets.copy()
+
             if self._tries == 0:
-                current_guess = [1, 1, 2, 2]
+                current_guess = (1, 1, 2, 2)
+                self._possiblesecrets.remove(current_guess)
+                self._allList.remove(current_guess)
                 self._most_recent_guess = current_guess
                 return current_guess
+
             elif len(self._possiblesecrets) == 1:
+
                 current_guess = self._possiblesecrets[0]
+                self._possiblesecrets.remove(current_guess)
                 return current_guess
+
             else:
-                scores = {}
-                for secret in templist:
-                    if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
-                        self._possiblesecrets.remove(secret)
-                if len(self._possiblesecrets) == 1:
+                #reduce the amount of secrets in possiblesecrets
+                _reduce(self, templist)
+                #if the length < 3 we only have two correct guesses remaining which we then submit one of.
+
+                if len(self._possiblesecrets) < 3:
                     current_guess = self._possiblesecrets[0]
+                    self._possiblesecrets.remove(current_guess)
                     return current_guess
 
-                for secret in self._possiblesecrets:
+                scores = {}
+                ##here we check all secrets vs the remaining possible answers
+                ##we give them a score based on the maximum amount of possible answers it eliminates
+                ##we then choose an option that eliminates the least amount of options
+                for secret in self._allList:
                     feedbackdict = {}
                     for secret2 in self._possiblesecrets:
                             feedback = _auto_feedback(secret, secret2)  #check every secret with every other secret
@@ -240,16 +245,27 @@ class ComputerCodeBreaker(CodeBreaker):
                             except:
                                 feedbackdict[feedback] = 1
                     tuplesecret = tuple(secret)                     #same thing, can't pass lists as key
-                    scores[tuplesecret] = max(feedbackdict.values())#save the tested secret and it's maximum matched score
+                    scores[tuplesecret] = max(feedbackdict.values()) #save the tested secret and it's maximum matched score
 
                 best = min(scores.values())                         #the best guess has the least matched scores
-
                 #select the first guess that has the best score - there could be multiple
-                current_guess = list([guess for guess in scores.keys() if scores[guess] == best][0])
+                best_guesses = [guess for guess in scores.keys() if scores[guess] == best]
+                current_guess = ''
+                for guess in best_guesses:
+                    if guess in self._possiblesecrets:
+                        current_guess = guess
+                        self._possiblesecrets.remove(current_guess)
+                        break
+
+                if current_guess == '':
+                    current_guess = best_guesses[0]
+
+                self._allList.remove(current_guess)
                 self._most_recent_guess = current_guess
-                self._possiblesecrets.remove(current_guess)
                 return current_guess
 
+        elif algorithm == 4:
+            print('do nothing')
 
 
 
@@ -330,7 +346,10 @@ class MastermindGameUtils(object):
         else:
             return random.sample(range(1, self.n_colors + 1), self.n_positions)
 
-
+def _reduce(self, list):
+    for secret in list:
+        if _auto_feedback(secret, self._most_recent_guess) != self._most_recent_feedback:
+            self._possiblesecrets.remove(secret)
 def _is_guess_correct(feedback):
     '''
     Function written by Levi Verhoef
@@ -353,8 +372,8 @@ def _auto_feedback(code, guess):
     #make default feedback
     feedback = [0,0]
     #copy the code and the guess so we edit those and not the original
-    codecopy = code.copy()
-    guesscopy = guess.copy()
+    codecopy = list(code)
+    guesscopy = list(guess)
 
     #calculate the feedback
     #first, check for black pins, and remove the corresponding entries from the copied list
