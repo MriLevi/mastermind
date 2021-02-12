@@ -1,6 +1,6 @@
 import time
 program_start = time.time()
-for i in range(100):
+for i in range(10000):
     exec(open("./mastermind.py").read())
 program_end = time.time()
 
