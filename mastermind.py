@@ -272,7 +272,7 @@ class ComputerCodeBreaker(CodeBreaker):
                 self._most_recent_guess = current_guess
                 return current_guess
 
-        elif algorithm == 1:
+        elif algorithm == 4:
             '''
             HUMAN STRATEGY
             This algorithm tries to eliminate two colors first, and only then starts to actually play smart. 
