@@ -14,7 +14,7 @@ x represents the amount of colors that are correct, and in the correct position
 
 y represents the amount of colors that are correct, but in the wrong position
 
-#Algorithms
+# Algorithms
 I've implemented multiple guessing algorithms. Some are better than others.
 
 Algorithm 1 = Simple Strategy by Shapiro.
@@ -36,6 +36,7 @@ Average tries was 4.471582181259601. Program took 6386.86208987236023 seconds to
 ```
 
 Algorithm 4 = Human Color Elimination Algorithm by Levi Verhoef
+
 This algorithm tries to eliminate 2 colors before switching over to the simple strategy.
 ```10000 tests of Algorithm 4
 Average tries was 7.8485. Program took 80.93378806114197 seconds to run. We took 0.008 seconds per try.
