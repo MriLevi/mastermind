@@ -58,11 +58,11 @@ Average tries was 7.8485. Program took 80.93378806114197 seconds to run. We took
     
     optional arguments:
       -h, --help            show this help message and exit
-      -colors COLORS        number of colors
-      -positions POSITIONS  number of positions in code
+      -colors COLORS        number of colors (not implemented)
+      -positions POSITIONS  number of positions in code (not implemented)
       --maker               play as code maker
       --breaker             play as code breaker
-      --no_duplicates       disallow duplicate colors
+      --no_duplicates       disallow duplicate colors (currently not implemented)
       --auto_feedback       automatically give feedback when user is playing as
                             code maker
       --rules               show rules and exit
